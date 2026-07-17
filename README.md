@@ -7,20 +7,18 @@ A monorepo of standalone projects spanning mathematics, machine learning, algori
 | # | Project | Language | Area |
 |---|---------|----------|------|
 | 1 | [Chatbot](chatbot/) | Python | NLP / ML |
-| 2 | [Recommendation Engine](recommendation-engine/) | Python / C++ | ML |
+| 2 | [Recommendation Engine](recommendation-engine/) | Python | ML |
 | 3 | [Spam / Sentiment Classifier](spam-sentiment-classifier/) | Python | NLP / ML |
 | 4 | [Predictive Model](predictive-model/) | Python | ML / Stats |
-| 5 | [Image Classifier](image-classifier/) | Python / C++ | CV / ML |
-| 6 | [Numeric Methods Engine](numeric-methods-engine/) | C / C++ | Scientific Computing |
+| 5 | [Image Classifier](image-classifier/) | Python | CV / ML |
+| 6 | [Numeric Methods Engine](numeric-methods-engine/) | C | Scientific Computing |
 | 7 | [Linear Algebra Visualizer](linear-algebra-visualizer/) | JavaScript | Math / Visualization |
-| 8 | [Probability & Statistics Simulator](probability-statistics-simulator/) | Python / JS | Math / Stats |
-| 9 | [Cryptography Playground](cryptography-playground/) | C / C++ | Cryptography |
-| 10 | [Graph Theory Toolkit](graph-theory-toolkit/) | C++ / Python | Graph Theory |
-| 11 | [Algorithm Problem Solver](algorithm-problem-solver/) | C / C++ / Python | Algorithms / CP |
-| 12 | [Custom Math Library](custom-math-library/) | C / C++ / Python | Math |
-| 13 | [Symbolic Math Interpreter](symbolic-math-interpreter/) | Python / C++ | Math / Compilers |
+| 8 | [Probability & Statistics Simulator](probability-statistics-simulator/) | Python | Math / Stats |
+| 9 | [Cryptography Playground](cryptography-playground/) | C | Cryptography |
+| 10 | [Graph Theory Toolkit](graph-theory-toolkit/) | Python | Graph Theory |
+| 13 | [Symbolic Math Interpreter](symbolic-math-interpreter/) | Python | Math / Compilers |
 | 14 | [Game Physics Engine](game-physics-engine/) | C++ | Physics / Simulation |
-| 15 | [Optimization Engine](optimization-engine/) | C++ / Python | Optimization |
+| 15 | [Optimization Engine](optimization-engine/) | Python | Optimization |
 
 ## Structure
 

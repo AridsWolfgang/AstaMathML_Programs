@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linear Algebra Visualizer</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a2e; color: #eee; }
+h1 { text-align: center; padding: 15px; background: #16213e; font-size: 22px; letter-spacing: 1px; border-bottom: 2px solid #0f3460; }
+.tabs { display: flex; background: #16213e; border-bottom: 2px solid #0f3460; }
+.tab { padding: 10px 20px; cursor: pointer; border: none; background: transparent; color: #888; font-size: 14px; transition: 0.2s; }
+.tab:hover { color: #eee; background: rgba(255,255,255,0.05); }
+.tab.active { color: #e94560; border-bottom: 3px solid #e94560; background: rgba(233,69,96,0.1); }
+.tab-content { display: none; }
+.tab-content.active { display: flex; flex-direction: column; }
+.panel { display: flex; flex-wrap: wrap; padding: 15px; gap: 15px; }
+canvas { background: #0a0a1a; border: 1px solid #333; border-radius: 6px; cursor: crosshair; flex: 1; min-width: 400px; min-height: 400px; }
+.controls { background: #16213e; border-radius: 6px; padding: 15px; min-width: 250px; max-width: 320px; }
+.controls h3 { color: #e94560; margin-bottom: 10px; font-size: 15px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+.control-group { margin-bottom: 12px; }
+.control-group label { display: block; font-size: 12px; color: #aaa; margin-bottom: 3px; }
+.control-group input[type="range"] { width: 100%; accent-color: #e94560; }
+.control-group input[type="number"] { width: 60px; padding: 3px 6px; background: #0a0a1a; border: 1px solid #333; color: #eee; border-radius: 4px; font-size: 12px; }
+.output-box { background: #0a0a1a; border: 1px solid #333; border-radius: 4px; padding: 8px; margin-top: 8px; font-family: monospace; font-size: 12px; min-height: 30px; }
+.output-box .val { color: #4ecca3; }
+.matrix-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.matrix-grid input { width: 100%; }
+.slider-row { display: flex; align-items: center; gap: 8px; }
+.slider-row input[type="range"] { flex: 1; }
+.slider-row span { min-width: 35px; text-align: right; font-family: monospace; font-size: 12px; color: #4ecca3; }
+.btn { padding: 6px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; background: #0f3460; color: #eee; transition: 0.2s; }
+.btn:hover { background: #e94560; }
+.btn.active { background: #e94560; }
+.checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.checkbox-row input { accent-color: #e94560; }
+.color-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 4px; }
+@media (max-width: 700px) { .panel { flex-direction: column; } canvas { min-width: unset; width: 100%; } .controls { max-width: unset; } }
+</style>
+</head>
+<body>
+<h1>Linear Algebra Visualizer</h1>
+<div class="tabs">
+  <button class="tab active" data-tab="vectors">Vector Space</button>
+  <button class="tab" data-tab="matrix">Matrix Transform</button>
+  <button class="tab" data-tab="rotation">3D Rotation</button>
+  <button class="tab" data-tab="eigen">Eigenvectors</button>
+</div>
+
+<div id="tab-vectors" class="tab-content active">
+  <div class="panel">
+    <canvas id="cv-vectors" width="600" height="500"></canvas>
+    <div class="controls">
+      <h3>Vector Controls</h3>
+      <div class="control-group">
+        <label>Click canvas to place vectors. Drag arrow head to modify.</label>
+      </div>
+      <div class="control-group">
+        <label>Selected Vector</label>
+        <div class="slider-row"><span id="v1x">0</span><input type="range" id="v1x-s" min="-5" max="5" step="0.1" value="3"><span id="v1xv">3.0</span></div>
+        <div class="slider-row"><span id="v1y">0</span><input type="range" id="v1y-s" min="-5" max="5" step="0.1" value="1"><span id="v1yv">1.0</span></div>
+      </div>
+      <div class="control-group">
+        <label>Scalar Multiply</label>
+        <div class="slider-row"><input type="range" id="scalar-s" min="-3" max="3" step="0.1" value="1"><span id="scalar-v">1.0</span></div>
+      </div>
+      <div class="control-group">
+        <label>Second Vector</label>
+        <div class="slider-row"><span id="v2x">1</span><input type="range" id="v2x-s" min="-5" max="5" step="0.1" value="1"><span id="v2xv">1.0</span></div>
+        <div class="slider-row"><span id="v2y">0</span><input type="range" id="v2y-s" min="-5" max="5" step="0.1" value="3"><span id="v2yv">3.0</span></div>
+      </div>
+      <div class="output-box" id="vector-output">
+        <div>v = (<span class="val" id="disp-vx">3.0</span>, <span class="val" id="disp-vy">1.0</span>)</div>
+        <div>w = (<span class="val" id="disp-wx">1.0</span>, <span class="val" id="disp-wy">3.0</span>)</div>
+        <div>v·w = <span class="val" id="disp-dot">6.0</span></div>
+        <div>v+w = (<span class="val" id="disp-sumx">4.0</span>, <span class="val" id="disp-sumy">4.0</span>)</div>
+        <div>v−w = (<span class="val" id="disp-diffx">2.0</span>, <span class="val" id="disp-diffy">-2.0</span>)</div>
+        <div>c·v = (<span class="val" id="disp-cvx">3.0</span>, <span class="val" id="disp-cvy">1.0</span>)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tab-matrix" class="tab-content">
+  <div class="panel">
+    <canvas id="cv-matrix" width="600" height="500"></canvas>
+    <div class="controls">
+      <h3>Matrix [[a,b],[c,d]]</h3>
+      <div class="matrix-grid">
+        <div class="control-group"><label>a</label><div class="slider-row"><input type="range" id="ma" min="-3" max="3" step="0.1" value="1"><span id="ma-v">1.0</span></div></div>
+        <div class="control-group"><label>b</label><div class="slider-row"><input type="range" id="mb" min="-3" max="3" step="0.1" value="0"><span id="mb-v">0.0</span></div></div>
+        <div class="control-group"><label>c</label><div class="slider-row"><input type="range" id="mc" min="-3" max="3" step="0.1" value="0"><span id="mc-v">0.0</span></div></div>
+        <div class="control-group"><label>d</label><div class="slider-row"><input type="range" id="md" min="-3" max="3" step="0.1" value="1"><span id="md-v">1.0</span></div></div>
+      </div>
+      <div class="control-group">
+        <button class="btn" id="animate-btn">Animate</button>
+        <button class="btn" id="reset-shape-btn">Reset Shape</button>
+      </div>
+      <div class="output-box" id="matrix-output">
+        <div>det = <span class="val" id="disp-det">1.0</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tab-rotation" class="tab-content">
+  <div class="panel">
+    <canvas id="cv-rotation" width="600" height="500"></canvas>
+    <div class="controls">
+      <h3>Rotation Angles</h3>
+      <div class="control-group"><label>X Axis</label><div class="slider-row"><input type="range" id="rx" min="0" max="360" value="30"><span id="rx-v">30°</span></div></div>
+      <div class="control-group"><label>Y Axis</label><div class="slider-row"><input type="range" id="ry" min="0" max="360" value="45"><span id="ry-v">45°</span></div></div>
+      <div class="control-group"><label>Z Axis</label><div class="slider-row"><input type="range" id="rz" min="0" max="360" value="0"><span id="rz-v">0°</span></div></div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="auto-rotate" checked>
+        <label for="auto-rotate">Auto-rotate</label>
+      </div>
+      <div class="output-box" id="rotation-output">
+        <div>Vertices: 8 | Edges: 12</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tab-eigen" class="tab-content">
+  <div class="panel">
+    <canvas id="cv-eigen" width="600" height="500"></canvas>
+    <div class="controls">
+      <h3>Eigenvalue Demo</h3>
+      <div class="control-group"><label>Matrix [[a,b],[c,d]]</label></div>
+      <div class="matrix-grid">
+        <div class="control-group"><label>a</label><div class="slider-row"><input type="range" id="ea" min="-3" max="3" step="0.1" value="2"><span id="ea-v">2.0</span></div></div>
+        <div class="control-group"><label>b</label><div class="slider-row"><input type="range" id="eb" min="-3" max="3" step="0.1" value="0"><span id="eb-v">0.0</span></div></div>
+        <div class="control-group"><label>c</label><div class="slider-row"><input type="range" id="ec" min="-3" max="3" step="0.1" value="0"><span id="ec-v">0.0</span></div></div>
+        <div class="control-group"><label>d</label><div class="slider-row"><input type="range" id="ed" min="-3" max="3" step="0.1" value="2"><span id="ed-v">2.0</span></div></div>
+      </div>
+      <div class="output-box" id="eigen-output">
+        <div>λ₁ = <span class="val" id="disp-eig1">2.0</span>  (v = <span class="val" id="disp-eigv1">(1, 0)</span>)</div>
+        <div>λ₂ = <span class="val" id="disp-eig2">2.0</span>  (v = <span class="val" id="disp-eigv2">(0, 1)</span>)</div>
+        <div style="margin-top:4px;font-size:11px;color:#888;">Non-eigenvectors shown in gray; eigenvectors in <span style="color:#e94560;">red</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+// ==================== UTILITY ====================
+function deg2rad(d) { return d * Math.PI / 180; }
+function rad2deg(r) { return r * 180 / Math.PI; }
+
+function matMul2x2(M, v) {
+  return [M[0]*v[0] + M[1]*v[1], M[2]*v[0] + M[3]*v[1]];
+}
+function det2x2(M) { return M[0]*M[3] - M[1]*M[2]; }
+
+function drawGrid(ctx, w, h, scale, ox, oy) {
+  ctx.strokeStyle = '#1a1a3a';
+  ctx.lineWidth = 0.5;
+  const step = scale;
+  for (let x = ox % step; x < w; x += step) {
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+  }
+  for (let y = oy % step; y < h; y += step) {
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+  }
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(ox,0); ctx.lineTo(ox,h); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,oy); ctx.lineTo(w,oy); ctx.stroke();
+  ctx.fillStyle = '#888';
+  ctx.font = '11px monospace';
+  for (let i = -10; i <= 10; i++) {
+    if (i === 0) continue;
+    const x = ox + i * scale;
+    if (x > 0 && x < w-10) { ctx.fillText(i, x+3, oy-3); }
+    const y = oy - i * scale;
+    if (y > 0 && y < h-5) { ctx.fillText(i, ox+3, y+3); }
+  }
+}
+
+function drawArrow(ctx, x, y, label, color) {
+  const angle = Math.atan2(y, x);
+  const len = Math.sqrt(x*x + y*y);
+  if (len < 1) return;
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(x, y);
+  ctx.stroke();
+  const headLen = Math.min(12, len * 0.2);
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x - headLen * Math.cos(angle - 0.35), y - headLen * Math.sin(angle - 0.35));
+  ctx.lineTo(x - headLen * Math.cos(angle + 0.35), y - headLen * Math.sin(angle + 0.35));
+  ctx.closePath();
+  ctx.fill();
+  if (label) {
+    ctx.font = '13px sans-serif';
+    ctx.fillStyle = color;
+    ctx.fillText(label, x + 8, y - 8);
+  }
+  ctx.restore();
+}
+
+// ==================== TAB SWITCHING ====================
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+    redrawAll();
+  });
+});
+
+function redrawAll() {
+  drawVectors();
+  drawMatrix();
+  drawRotation();
+  drawEigen();
+}
+
+// ==================== VECTOR TAB ====================
+const cv = document.getElementById('cv-vectors');
+const cctx = cv.getContext('2d');
+const V_SCALE = 60;
+
+let v1 = [3, 1];
+let v2 = [1, 3];
+let scalar = 1;
+let dragIdx = -1; // 0=v1 head, 1=v2 head
+
+function worldToScreen(wx, wy) {
+  return [cv.width/2 + wx * V_SCALE, cv.height/2 - wy * V_SCALE];
+}
+function screenToWorld(sx, sy) {
+  return [(sx - cv.width/2) / V_SCALE, (cv.height/2 - sy) / V_SCALE];
+}
+
+function drawVectors() {
+  const w = cv.width, h = cv.height;
+  const ox = w/2, oy = h/2;
+  cctx.clearRect(0,0,w,h);
+  drawGrid(cctx, w, h, V_SCALE, ox, oy);
+
+  const cv1 = [v1[0]*scalar, v1[1]*scalar];
+  const sum = [v1[0]+v2[0], v1[1]+v2[1]];
+  const diff = [v1[0]-v2[0], v1[1]-v2[1]];
+
+  cctx.save();
+  cctx.translate(ox, oy);
+
+  drawArrow(cctx, v2[0]*V_SCALE, -v2[1]*V_SCALE, 'w', '#4ecca3');
+  drawArrow(cctx, v1[0]*V_SCALE, -v1[1]*V_SCALE, 'v', '#e94560');
+  drawArrow(cctx, cv1[0]*V_SCALE, -cv1[1]*V_SCALE, 'c·v', '#ffd700');
+  drawArrow(cctx, sum[0]*V_SCALE, -sum[1]*V_SCALE, 'v+w', '#8888ff');
+
+  ctx.restore();
+  updateVectorOutput();
+}
+
+function updateVectorOutput() {
+  document.getElementById('disp-vx').textContent = v1[0].toFixed(1);
+  document.getElementById('disp-vy').textContent = v1[1].toFixed(1);
+  document.getElementById('disp-wx').textContent = v2[0].toFixed(1);
+  document.getElementById('disp-wy').textContent = v2[1].toFixed(1);
+  const dot = v1[0]*v2[0] + v1[1]*v2[1];
+  document.getElementById('disp-dot').textContent = dot.toFixed(2);
+  const sum = [v1[0]+v2[0], v1[1]+v2[1]];
+  document.getElementById('disp-sumx').textContent = sum[0].toFixed(1);
+  document.getElementById('disp-sumy').textContent = sum[1].toFixed(1);
+  const diff = [v1[0]-v2[0], v1[1]-v2[1]];
+  document.getElementById('disp-diffx').textContent = diff[0].toFixed(1);
+  document.getElementById('disp-diffy').textContent = diff[1].toFixed(1);
+  const cv1 = [v1[0]*scalar, v1[1]*scalar];
+  document.getElementById('disp-cvx').textContent = cv1[0].toFixed(1);
+  document.getElementById('disp-cvy').textContent = cv1[1].toFixed(1);
+}
+
+cv.addEventListener('mousedown', function(e) {
+  const rect = this.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const [wx, wy] = screenToWorld(sx, sy);
+  const eps = 0.3;
+  if (Math.hypot(wx - v1[0], wy - v1[1]) < eps) { dragIdx = 0; return; }
+  if (Math.hypot(wx - v2[0], wy - v2[1]) < eps) { dragIdx = 1; return; }
+  if (Math.hypot(wx - v1[0]*scalar, wy - v1[1]*scalar) < eps) { dragIdx = 0; return; }
+  dragIdx = -1;
+});
+
+cv.addEventListener('mousemove', function(e) {
+  if (dragIdx < 0) return;
+  const rect = this.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const [wx, wy] = screenToWorld(sx, sy);
+  if (dragIdx === 0) {
+    v1 = [Math.round(wx*10)/10, Math.round(wy*10)/10];
+    document.getElementById('v1x-s').value = v1[0];
+    document.getElementById('v1y-s').value = v1[1];
+    document.getElementById('v1xv').textContent = v1[0].toFixed(1);
+    document.getElementById('v1yv').textContent = v1[1].toFixed(1);
+  } else {
+    v2 = [Math.round(wx*10)/10, Math.round(wy*10)/10];
+    document.getElementById('v2x-s').value = v2[0];
+    document.getElementById('v2y-s').value = v2[1];
+    document.getElementById('v2xv').textContent = v2[0].toFixed(1);
+    document.getElementById('v2yv').textContent = v2[1].toFixed(1);
+  }
+  drawVectors();
+});
+window.addEventListener('mouseup', function() { dragIdx = -1; });
+
+function setupVectorSliders() {
+  function s(id, valId, setter, idx) {
+    const el = document.getElementById(id);
+    const valEl = document.getElementById(valId);
+    el.addEventListener('input', function() {
+      const v = parseFloat(this.value);
+      valEl.textContent = v.toFixed(1);
+      setter(v, idx);
+      drawVectors();
+    });
+  }
+  s('v1x-s', 'v1xv', (v) => { v1[0]=v; }, 0);
+  s('v1y-s', 'v1yv', (v) => { v1[1]=v; }, 1);
+  s('v2x-s', 'v2xv', (v) => { v2[0]=v; }, 0);
+  s('v2y-s', 'v2yv', (v) => { v2[1]=v; }, 1);
+  document.getElementById('scalar-s').addEventListener('input', function() {
+    scalar = parseFloat(this.value);
+    document.getElementById('scalar-v').textContent = scalar.toFixed(1);
+    drawVectors();
+  });
+}
+setupVectorSliders();
+
+// ==================== MATRIX TAB ====================
+const cm = document.getElementById('cv-matrix');
+const mctx = cm.getContext('2d');
+const M_SCALE = 50;
+
+let houseShape = [
+  [-2, -1], [2, -1], [2, 1], [1, 1.5], [1, 0.5],
+  [-1, 0.5], [-1, 1.5], [-2, 1]
+];
+let matrixVals = [1, 0, 0, 1];
+let animating = false;
+let animProgress = 0;
+let animStart = null;
+
+function drawMatrix() {
+  const w = cm.width, h = cm.height;
+  const ox = w/2, oy = h/2;
+  mctx.clearRect(0,0,w,h);
+  drawGrid(mctx, w, h, M_SCALE, ox, oy);
+
+  const M = matrixVals;
+  const det = det2x2(M);
+
+  mctx.save();
+  mctx.translate(ox, oy);
+  mctx.scale(1, -1);
+
+  mctx.strokeStyle = '#555';
+  mctx.fillStyle = 'rgba(85,85,85,0.2)';
+  mctx.lineWidth = 2;
+  mctx.beginPath();
+  houseShape.forEach((p, i) => { i===0 ? mctx.moveTo(p[0]*M_SCALE,p[1]*M_SCALE) : mctx.lineTo(p[0]*M_SCALE,p[1]*M_SCALE); });
+  mctx.closePath(); mctx.fill(); mctx.stroke();
+
+  const transformed = houseShape.map(p => matMul2x2(M, p));
+  mctx.strokeStyle = '#e94560';
+  mctx.fillStyle = 'rgba(233,69,96,0.3)';
+  mctx.lineWidth = 2.5;
+  mctx.beginPath();
+  transformed.forEach((p, i) => { i===0 ? mctx.moveTo(p[0]*M_SCALE,p[1]*M_SCALE) : mctx.lineTo(p[0]*M_SCALE,p[1]*M_SCALE); });
+  mctx.closePath(); mctx.fill(); mctx.stroke();
+
+  mctx.restore();
+  document.getElementById('disp-det').textContent = det.toFixed(3);
+}
+
+function setupMatrixSliders() {
+  ['ma','mb','mc','md'].forEach(id => {
+    const el = document.getElementById(id);
+    const valEl = document.getElementById(id+'-v');
+    const idx = {ma:0,mb:1,mc:2,md:3}[id];
+    el.addEventListener('input', function() {
+      const v = parseFloat(this.value);
+      valEl.textContent = v.toFixed(1);
+      matrixVals[idx] = v;
+      if (!animating) drawMatrix();
+    });
+  });
+  document.getElementById('animate-btn').addEventListener('click', function() {
+    if (animating) { animating = false; this.textContent = 'Animate'; return; }
+    animating = true;
+    this.textContent = 'Stop';
+    animProgress = 0;
+    animStart = performance.now();
+    requestAnimationFrame(animateMatrix);
+  });
+  document.getElementById('reset-shape-btn').addEventListener('click', function() {
+    matrixVals = [1,0,0,1];
+    ['ma','mb','mc','md'].forEach((id,i) => {
+      document.getElementById(id).value = [1,0,0,1][i];
+      document.getElementById(id+'-v').textContent = [1,0,0,1][i].toFixed(1);
+    });
+    drawMatrix();
+  });
+}
+setupMatrixSliders();
+
+function animateMatrix(ts) {
+  if (!animating) { drawMatrix(); return; }
+  const targets = [[2,0,0,1], [1,1,0,1], [0,-1,1,0], [1,0,0,2], [1,0,0,1]];
+  const idx = Math.floor(animProgress) % targets.length;
+  const t = (animProgress % 1);
+  const next = targets[idx];
+  const nextNext = targets[(idx + 1) % targets.length];
+  for (let i = 0; i < 4; i++) {
+    const v = next[i] + (nextNext[i] - next[i]) * t;
+    matrixVals[i] = v;
+    document.getElementById(['ma','mb','mc','md'][i]).value = v;
+    document.getElementById(['ma','mb','mc','md'][i]+'-v').textContent = v.toFixed(1);
+  }
+  drawMatrix();
+  animProgress += 0.008;
+  if (animProgress > targets.length) animProgress = 0;
+  requestAnimationFrame(animateMatrix);
+}
+
+// ==================== ROTATION TAB ====================
+const cr = document.getElementById('cv-rotation');
+const rctx = cr.getContext('2d');
+const R_SCALE = 120;
+const FOV = 3;
+
+let cubeVertices = [];
+for (let x = -1; x <= 1; x += 2)
+  for (let y = -1; y <= 1; y += 2)
+    for (let z = -1; z <= 1; z += 2)
+      cubeVertices.push([x, y, z]);
+
+let cubeEdges = [];
+for (let i = 0; i < 8; i++)
+  for (let j = i+1; j < 8; j++) {
+    let d = 0;
+    for (let k = 0; k < 3; k++) d += Math.abs(cubeVertices[i][k] - cubeVertices[j][k]);
+    if (d === 2) cubeEdges.push([i, j]);
+  }
+
+let rotX = 30, rotY = 45, rotZ = 0;
+let autoRotate = true;
+
+function rotatePoint(p, rx, ry, rz) {
+  let [x,y,z] = p;
+  let cx = Math.cos(rx), sx = Math.sin(rx);
+  let cy = Math.cos(ry), sy = Math.sin(ry);
+  let cz = Math.cos(rz), sz = Math.sin(rz);
+  let y1 = y*cx - z*sx, z1 = y*sx + z*cx;
+  let x2 = x*cy + z1*sy, z2 = -x*sy + z1*cy;
+  let x3 = x2*cz - y1*sz, y3 = x2*sz + y1*cz;
+  return [x3, y3, z2];
+}
+
+function project(p) {
+  const d = FOV;
+  const scale = d / (d + p[2]);
+  return [p[0] * scale * R_SCALE, p[1] * scale * R_SCALE];
+}
+
+function drawRotation() {
+  const w = cr.width, h = cr.height;
+  const ox = w/2, oy = h/2;
+  rctx.clearRect(0,0,w,h);
+  rctx.fillStyle = '#0a0a1a';
+  rctx.fillRect(0,0,w,h);
+
+  const rx = deg2rad(rotX), ry = deg2rad(rotY), rz = deg2rad(rotZ);
+  const rotated = cubeVertices.map(v => rotatePoint(v, rx, ry, rz));
+  const projected = rotated.map(v => project(v));
+  const minZ = Math.min(...rotated.map(v => v[2]));
+
+  rctx.save();
+  rctx.translate(ox, oy);
+
+  for (const [i, j] of cubeEdges) {
+    const zAvg = (rotated[i][2] + rotated[j][2]) / 2;
+    const alpha = 0.3 + 0.7 * (1 - (zAvg - minZ) / 3);
+    const bright = Math.floor(100 + 155 * alpha);
+    rctx.strokeStyle = `rgb(${bright}, ${bright}, 255)`;
+    rctx.lineWidth = 1.5;
+    rctx.beginPath();
+    rctx.moveTo(projected[i][0], projected[i][1]);
+    rctx.lineTo(projected[j][0], projected[j][1]);
+    rctx.stroke();
+  }
+
+  rotated.forEach((v, i) => {
+    const alpha = 0.3 + 0.7 * (1 - (v[2] - minZ) / 3);
+    const p = projected[i];
+    rctx.fillStyle = `rgba(233, 69, 96, ${alpha})`;
+    rctx.beginPath();
+    rctx.arc(p[0], p[1], 4, 0, Math.PI*2);
+    rctx.fill();
+  });
+
+  rctx.restore();
+}
+
+function setupRotationSliders() {
+  ['rx','ry','rz'].forEach(id => {
+    const el = document.getElementById(id);
+    const valEl = document.getElementById(id+'-v');
+    el.addEventListener('input', function() {
+      const v = parseFloat(this.value);
+      valEl.textContent = v + '°';
+      if (id === 'rx') rotX = v;
+      if (id === 'ry') rotY = v;
+      if (id === 'rz') rotZ = v;
+    });
+  });
+  document.getElementById('auto-rotate').addEventListener('change', function() {
+    autoRotate = this.checked;
+  });
+}
+setupRotationSliders();
+
+let rotationAnimId = null;
+function rotationLoop() {
+  drawRotation();
+  if (autoRotate) {
+    rotX = (rotX + 0.3) % 360;
+    rotY = (rotY + 0.5) % 360;
+    document.getElementById('rx').value = rotX;
+    document.getElementById('rx-v').textContent = Math.round(rotX) + '°';
+    document.getElementById('ry').value = rotY;
+    document.getElementById('ry-v').textContent = Math.round(rotY) + '°';
+  }
+  rotationAnimId = requestAnimationFrame(rotationLoop);
+}
+rotationLoop();
+
+// ==================== EIGEN TAB ====================
+const ce = document.getElementById('cv-eigen');
+const ectx = ce.getContext('2d');
+const E_SCALE = 50;
+
+let eigenM = [2, 0, 0, 2];
+
+function computeEigen(M) {
+  const a = M[0], b = M[1], c = M[2], d = M[3];
+  const trace = a + d;
+  const det = a*d - b*c;
+  const disc = trace*trace - 4*det;
+  if (disc < 0) return null;
+  const sqrtDisc = Math.sqrt(disc);
+  const l1 = (trace + sqrtDisc) / 2;
+  const l2 = (trace - sqrtDisc) / 2;
+  const ev1 = (b !== 0) ? [l1 - d, b] : (c !== 0) ? [c, l1 - a] : [1, 0];
+  const ev2 = (b !== 0) ? [l2 - d, b] : (c !== 0) ? [c, l2 - a] : [0, 1];
+  const mag1 = Math.hypot(ev1[0], ev1[1]);
+  const mag2 = Math.hypot(ev2[0], ev2[1]);
+  return {
+    l1, l2,
+    v1: mag1 > 1e-10 ? [ev1[0]/mag1, ev1[1]/mag1] : [1,0],
+    v2: mag2 > 1e-10 ? [ev2[0]/mag2, ev2[1]/mag2] : [0,1],
+  };
+}
+
+function isEigenvector(vec, M) {
+  const transformed = matMul2x2(M, vec);
+  const ratio1 = vec[0] !== 0 ? transformed[0]/vec[0] : (vec[1] !== 0 ? transformed[1]/vec[1] : 0);
+  const ratio2 = vec[1] !== 0 ? transformed[1]/vec[1] : ratio1;
+  return Math.abs(ratio1 - ratio2) < 0.05;
+}
+
+function drawEigen() {
+  const w = ce.width, h = ce.height;
+  const ox = w/2, oy = h/2;
+  ectx.clearRect(0,0,w,h);
+  drawGrid(ectx, w, h, E_SCALE, ox, oy);
+
+  const eig = computeEigen(eigenM);
+
+  ectx.save();
+  ectx.translate(ox, oy);
+
+  const numAngles = 24;
+  for (let i = 0; i < numAngles; i++) {
+    const angle = (i / numAngles) * 2 * Math.PI;
+    const vec = [Math.cos(angle), Math.sin(angle)];
+    const transformed = matMul2x2(eigenM, vec);
+    const isEig = eig !== null && (isEigenvector(eig.v1, eigenM) ||
+      (Math.abs(Math.abs(vec[0]*eig.v1[0] + vec[1]*eig.v1[1]) - 1) < 0.05));
+    const isEig2 = eig !== null && (isEigenvector(eig.v2, eigenM) ||
+      (Math.abs(Math.abs(vec[0]*eig.v2[0] + vec[1]*eig.v2[1]) - 1) < 0.05));
+    const isEigen = isEig || isEig2;
+
+    const color = isEigen ? '#e94560' : 'rgba(100,100,100,0.4)';
+    const colorT = isEigen ? '#ff6b81' : 'rgba(78,204,163,0.5)';
+    const lw = isEigen ? 2.5 : 1;
+
+    ectx.strokeStyle = color;
+    ectx.lineWidth = lw;
+    ectx.beginPath();
+    ectx.moveTo(0, 0);
+    ectx.lineTo(vec[0]*E_SCALE, -vec[1]*E_SCALE);
+    ectx.stroke();
+
+    ectx.strokeStyle = colorT;
+    ectx.lineWidth = lw;
+    ectx.beginPath();
+    const tx = transformed[0], ty = transformed[1];
+    ectx.moveTo(0, 0);
+    ectx.lineTo(tx*E_SCALE, -ty*E_SCALE);
+    ectx.stroke();
+  }
+
+  if (eig !== null) {
+    ectx.fillStyle = '#ffd700';
+    ectx.font = 'bold 13px sans-serif';
+    ectx.fillText(`λ₁ = ${eig.l1.toFixed(2)}`, -w/2+10, -h/2+20);
+    ectx.fillText(`v₁ = (${eig.v1[0].toFixed(2)}, ${eig.v1[1].toFixed(2)})`, -w/2+10, -h/2+38);
+    ectx.fillText(`λ₂ = ${eig.l2.toFixed(2)}`, -w/2+10, -h/2+56);
+    ectx.fillText(`v₂ = (${eig.v2[0].toFixed(2)}, ${eig.v2[1].toFixed(2)})`, -w/2+10, -h/2+74);
+  }
+
+  ectx.restore();
+  updateEigenOutput(eig);
+}
+
+function updateEigenOutput(eig) {
+  if (!eig) {
+    document.getElementById('disp-eig1').textContent = 'complex';
+    document.getElementById('disp-eig2').textContent = 'complex';
+    return;
+  }
+  document.getElementById('disp-eig1').textContent = eig.l1.toFixed(3);
+  document.getElementById('disp-eigv1').textContent = `(${eig.v1[0].toFixed(2)}, ${eig.v1[1].toFixed(2)})`;
+  document.getElementById('disp-eig2').textContent = eig.l2.toFixed(3);
+  document.getElementById('disp-eigv2').textContent = `(${eig.v2[0].toFixed(2)}, ${eig.v2[1].toFixed(2)})`;
+}
+
+function setupEigenSliders() {
+  ['ea','eb','ec','ed'].forEach(id => {
+    const el = document.getElementById(id);
+    const valEl = document.getElementById(id+'-v');
+    const idx = {ea:0,eb:1,ec:2,ed:3}[id];
+    el.addEventListener('input', function() {
+      const v = parseFloat(this.value);
+      valEl.textContent = v.toFixed(1);
+      eigenM[idx] = v;
+      drawEigen();
+    });
+  });
+}
+setupEigenSliders();
+
+// ==================== INIT ====================
+drawVectors();
+drawMatrix();
+drawEigen();
+})();
+</script>
+</body>
+</html>
