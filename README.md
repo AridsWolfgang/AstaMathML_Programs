@@ -16,8 +16,8 @@ A monorepo of standalone projects spanning mathematics, machine learning, algori
 | 8 | [Probability & Statistics Simulator](probability-statistics-simulator/) | Python / JS | Math / Stats |
 | 9 | [Cryptography Playground](cryptography-playground/) | C / C++ | Cryptography |
 | 10 | [Graph Theory Toolkit](graph-theory-toolkit/) | C++ / Python | Graph Theory |
-| 11 | [Algorithm Problem Solver](algorithm-problem-solver/) | C++ | Algorithms / CP |
-| 12 | [Custom Math Library](custom-math-library/) | C | Math |
+| 11 | [Algorithm Problem Solver](algorithm-problem-solver/) | C / C++ / Python | Algorithms / CP |
+| 12 | [Custom Math Library](custom-math-library/) | C / C++ / Python | Math |
 | 13 | [Symbolic Math Interpreter](symbolic-math-interpreter/) | Python / C++ | Math / Compilers |
 | 14 | [Game Physics Engine](game-physics-engine/) | C++ | Physics / Simulation |
 | 15 | [Optimization Engine](optimization-engine/) | C++ / Python | Optimization |
